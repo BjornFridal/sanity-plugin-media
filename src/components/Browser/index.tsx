@@ -74,7 +74,7 @@ const BrowserContent = ({onClose}: {onClose?: AssetSourceComponentProps['onClose
       const {documentId, result, transition} = update
 
       if (transition === 'appear') {
-        dispatch(foldersActions.listenerCreateQueue({folder: result as unknown as Folder}))
+        dispatch(foldersActions.listenerCreateQueue({folder: result as Folder}))
       }
 
       if (transition === 'disappear') {
@@ -82,7 +82,7 @@ const BrowserContent = ({onClose}: {onClose?: AssetSourceComponentProps['onClose
       }
 
       if (transition === 'update') {
-        dispatch(foldersActions.listenerUpdateQueue({folder: result as unknown as Folder}))
+        dispatch(foldersActions.listenerUpdateQueue({folder: result as Folder}))
       }
     }
 

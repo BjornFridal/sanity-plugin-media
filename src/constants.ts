@@ -77,6 +77,8 @@ export const GRID_TEMPLATE_COLUMNS = {
 }
 export const FOLDER_DOCUMENT_NAME = 'media.folder'
 export const FOLDERS_PANEL_WIDTH = 250 // px
+export const FOLDER_ROOT_ID = '__ROOT__'
+export const FOLDER_SEE_ALL_ID = '__ALL__'
 export const PANEL_HEIGHT = 32 // px
 export const TAG_DOCUMENT_NAME = 'media.tag'
 export const TAGS_PANEL_WIDTH = 250 // px

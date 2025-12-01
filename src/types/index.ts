@@ -351,8 +351,8 @@ export type Span = {
   marks: string[]
 }
 
-export type Folder = Omit<SanityDocument, '_id'> & {
-  _id: string | null | undefined
+export type Folder = SanityDocument & {
+  _id: string
   name: {
     _type: 'slug'
     current: string

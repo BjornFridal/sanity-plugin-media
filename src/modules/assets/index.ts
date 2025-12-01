@@ -1,16 +1,5 @@
 import {createSelector, createSlice, type PayloadAction} from '@reduxjs/toolkit'
 import type {ClientError, Patch, Transaction} from '@sanity/client'
-import type {
-  Asset,
-  AssetItem,
-  AssetType,
-  BrowserView,
-  HttpError,
-  MyEpic,
-  Order,
-  OrderDirection,
-  Tag
-} from '../../types'
 import groq from 'groq'
 import {nanoid} from 'nanoid'
 import type {Selector} from 'react-redux'
@@ -26,13 +15,24 @@ import {
   withLatestFrom
 } from 'rxjs/operators'
 import {getOrderTitle} from '../../config/orders'
-import {ORDER_OPTIONS} from '../../constants'
+import {FOLDER_ROOT_ID, ORDER_OPTIONS} from '../../constants'
 import debugThrottle from '../../operators/debugThrottle'
+import type {
+  Asset,
+  AssetItem,
+  AssetType,
+  BrowserView,
+  HttpError,
+  MyEpic,
+  Order,
+  OrderDirection,
+  Tag
+} from '../../types'
 import constructFilter from '../../utils/constructFilter'
+import {foldersActions} from '../folders'
 import {searchActions} from '../search'
 import type {RootReducerState} from '../types'
 import {UPLOADS_ACTIONS} from '../uploads/actions'
-import {foldersActions} from '../folders'
 import {ASSETS_ACTIONS} from './actions'
 type ItemError = {
   description: string
@@ -753,7 +753,7 @@ export const assetsTagsRemoveEpic: MyEpic = (action$, state$, {client}) => {
 const patchOperationFolderSet =
   ({folderId}: {folderId: string | null}) =>
   (patch: Patch) => {
-    if (folderId === null) {
+    if (folderId === FOLDER_ROOT_ID) {
       // Remove folder assignment
       return patch.unset(['opt.media.folder'])
     }

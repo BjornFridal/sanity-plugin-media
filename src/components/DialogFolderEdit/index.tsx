@@ -96,9 +96,9 @@ const DialogFolderEdit = (props: Props) => {
       const {result, transition} = update
       if (result && transition === 'update') {
         // Regenerate snapshot
-        setFolderSnapshot(result as unknown as Folder)
+        setFolderSnapshot(result as Folder)
         // Reset react-hook-form
-        reset(generateDefaultValues(result as unknown as Folder))
+        reset(generateDefaultValues(result as Folder))
       }
     },
     [reset]

@@ -5,7 +5,7 @@ import type {Selector} from 'react-redux'
 import {ofType} from 'redux-observable'
 import {from, of} from 'rxjs'
 import {bufferTime, catchError, filter, mergeMap, switchMap, withLatestFrom} from 'rxjs/operators'
-import {FOLDER_DOCUMENT_NAME} from '../../constants'
+import {FOLDER_DOCUMENT_NAME, FOLDER_ROOT_ID} from '../../constants'
 import checkFolderName from '../../operators/checkFolderName'
 import debugThrottle from '../../operators/debugThrottle'
 import type {
@@ -362,7 +362,7 @@ export const foldersMoveEpic: MyEpic = (action$, state$, {client}) =>
           of(
             foldersSlice.actions.moveComplete({
               closeDialogId,
-              folder: result as unknown as Folder
+              folder: result as Folder
             })
           )
         ),
@@ -600,7 +600,7 @@ export const foldersUpdateEpic: MyEpic = (action$, state$, {client}) =>
           of(
             foldersSlice.actions.updateComplete({
               closeDialogId: folder._id as string,
-              folder: result as unknown as Folder
+              folder: result as Folder
             })
           )
         ),
@@ -647,7 +647,7 @@ export const selectChildFolders = createSelector(
   (folders, currentFolderId) =>
     folders.filter((item: FolderItem) => {
       const parentRef = item.folder.parent?._ref
-      if (currentFolderId === null) {
+      if (currentFolderId === FOLDER_ROOT_ID) {
         // Root level - folders with no parent
         return !parentRef
       }

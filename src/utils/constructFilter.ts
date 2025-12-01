@@ -1,5 +1,6 @@
 import groq from 'groq'
 import {operators} from '../config/searchFacets'
+import {FOLDER_ROOT_ID} from '../constants'
 import type {AssetType, SearchFacetInputProps} from '../types'
 
 const constructFilter = ({
@@ -79,7 +80,7 @@ const constructFilter = ({
   // Folder filter
   let folderFilter = null
   if (!searchQuery) {
-    if (currentFolderId === null) {
+    if (currentFolderId === FOLDER_ROOT_ID) {
       folderFilter = groq`!defined(opt.media.folder)` // Root level - no folder assigned
     } else if (currentFolderId !== undefined) {
       folderFilter = groq`opt.media.folder._ref == "${currentFolderId}"` // Specific folder
