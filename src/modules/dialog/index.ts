@@ -1,11 +1,12 @@
 import {createSlice, type PayloadAction} from '@reduxjs/toolkit'
-import type {AssetItem, Dialog, MyEpic, Tag} from '../../types'
 import pluralize from 'pluralize'
 import {ofType} from 'redux-observable'
-import {EMPTY, of} from 'rxjs'
+import {EMPTY, from, of} from 'rxjs'
 import {filter, mergeMap} from 'rxjs/operators'
+import type {AssetItem, Dialog, Folder, MyEpic, Tag} from '../../types'
 import {assetsActions} from '../assets'
 import {ASSETS_ACTIONS} from '../assets/actions'
+import {foldersActions} from '../folders'
 import {tagsActions} from '../tags'
 import {DIALOG_ACTIONS} from './actions'
 
@@ -21,20 +22,53 @@ const dialogSlice = createSlice({
   name: 'dialog',
   initialState,
   extraReducers: builder => {
-    builder.addCase(DIALOG_ACTIONS.showTagCreate, state => {
-      state.items.push({
-        id: 'tagCreate',
-        type: 'tagCreate'
+    builder
+      .addCase(DIALOG_ACTIONS.showFolderCreate, (state, action) => {
+        const {parentId} = action.payload
+        state.items.push({
+          id: 'folderCreate',
+          parentId,
+          type: 'folderCreate'
+        })
       })
-    })
-    builder.addCase(DIALOG_ACTIONS.showTagEdit, (state, action) => {
-      const {tagId} = action.payload
-      state.items.push({
-        id: tagId,
-        tagId,
-        type: 'tagEdit'
+      .addCase(DIALOG_ACTIONS.showFolderEdit, (state, action) => {
+        const {folderId} = action.payload
+        state.items.push({
+          folderId,
+          id: folderId,
+          type: 'folderEdit'
+        })
       })
-    })
+      .addCase(DIALOG_ACTIONS.showFolderMove, (state, action) => {
+        const {folderId} = action.payload
+        state.items.push({
+          folderId,
+          id: 'folderMoveToFolder',
+          type: 'folderMoveToFolder'
+        })
+      })
+      .addCase(DIALOG_ACTIONS.showAssetMoveToFolder, (state, action) => {
+        const {assetIds} = action.payload
+        state.items.push({
+          assetIds,
+          id: 'assetMoveToFolder',
+          type: 'assetMoveToFolder'
+        })
+      })
+      .addCase(DIALOG_ACTIONS.showTagCreate, state => {
+        state.items.push({
+          id: 'tagCreate',
+          type: 'tagCreate'
+        })
+      })
+      .addCase(DIALOG_ACTIONS.showTagEdit, (state, action) => {
+        const {tagId} = action.payload
+        state.items.push({
+          id: tagId,
+          tagId,
+          type: 'tagEdit'
+        })
+      })
   },
   reducers: {
     // Clear all dialogs
@@ -140,6 +174,26 @@ const dialogSlice = createSlice({
         type: 'confirm'
       })
     },
+    showConfirmDeleteFolder(
+      state,
+      action: PayloadAction<{closeDialogId?: string; folder: Folder}>
+    ) {
+      const {closeDialogId, folder} = action.payload
+
+      const suffix = 'folder'
+
+      state.items.push({
+        closeDialogId,
+        confirmCallbackAction: foldersActions.deleteRequest({folder}),
+        confirmText: `Yes, delete ${suffix}`,
+        description: 'This operation cannot be reversed. Are you sure you want to continue?',
+        title: `Permanently delete ${suffix}?`,
+        id: 'confirm',
+        headerTitle: 'Confirm deletion',
+        tone: 'critical',
+        type: 'confirm'
+      })
+    },
     showConfirmDeleteTag(state, action: PayloadAction<{closeDialogId?: string; tag: Tag}>) {
       const {closeDialogId, tag} = action.payload
 
@@ -187,6 +241,9 @@ export const dialogClearOnAssetUpdateEpic: MyEpic = action$ =>
     ofType(
       assetsActions.deleteComplete.type,
       assetsActions.updateComplete.type,
+      foldersActions.deleteComplete.type,
+      foldersActions.moveComplete.type,
+      foldersActions.updateComplete.type,
       tagsActions.deleteComplete.type,
       tagsActions.updateComplete.type
     ),
@@ -197,10 +254,18 @@ export const dialogClearOnAssetUpdateEpic: MyEpic = action$ =>
     ),
     mergeMap(action => {
       const dialogId = action?.payload?.closeDialogId
+      const actions = []
+
       if (dialogId) {
-        return of(dialogSlice.actions.remove({id: dialogId}))
+        actions.push(dialogSlice.actions.remove({id: dialogId}))
       }
-      return EMPTY
+
+      // For folder moves, also close the move dialog
+      if (action.type === foldersActions.moveComplete.type) {
+        actions.push(dialogSlice.actions.remove({id: 'folderMoveToFolder'}))
+      }
+
+      return from(actions)
     })
   )
 

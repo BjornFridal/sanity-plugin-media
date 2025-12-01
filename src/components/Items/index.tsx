@@ -4,6 +4,7 @@ import {useDispatch} from 'react-redux'
 import useBreakpointIndex from '../../hooks/useBreakpointIndex'
 import useTypedSelector from '../../hooks/useTypedSelector'
 import {assetsActions} from '../../modules/assets'
+import {selectCurrentFolder} from '../../modules/folders'
 import {selectCombinedItems} from '../../modules/selectors'
 import {tagsActions} from '../../modules/tags'
 import AssetGridVirtualized from '../AssetGridVirtualized'
@@ -39,14 +40,23 @@ const Items = () => {
     }
   }, [breakpointIndex])
 
+  const currentFolder = useTypedSelector(selectCurrentFolder)
+  const searchQuery = useTypedSelector(state => state.search.query)
+
   const isEmpty = !hasItems && hasFetchedOnce && !fetching
+
+  const emptyText = searchQuery
+    ? 'Your search gave no results.'
+    : `The ${
+        currentFolder?.folder?.name?.current ? `"${currentFolder.folder.name.current}"` : 'Root'
+      } folder is empty.`
 
   return (
     <Box flex={1} style={{width: '100%'}}>
       {isEmpty ? (
         <Box padding={4}>
           <Text size={1} weight="semibold">
-            No results for the current query
+            {emptyText}
           </Text>
         </Box>
       ) : (

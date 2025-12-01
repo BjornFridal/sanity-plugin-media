@@ -1,19 +1,21 @@
 import type {MutationEvent} from '@sanity/client'
 import {Card, Flex, PortalProvider} from '@sanity/ui'
-import type {Asset, Tag} from '../../types'
 import groq from 'groq'
 import {useEffect, useState} from 'react'
 import {useDispatch} from 'react-redux'
 import {type AssetSourceComponentProps, type SanityDocument} from 'sanity'
-import {TAG_DOCUMENT_NAME} from '../../constants'
+import {FOLDER_DOCUMENT_NAME, TAG_DOCUMENT_NAME} from '../../constants'
 import {AssetBrowserDispatchProvider} from '../../contexts/AssetSourceDispatchContext'
 import useVersionedClient from '../../hooks/useVersionedClient'
 import {assetsActions} from '../../modules/assets'
+import {foldersActions} from '../../modules/folders'
 import {tagsActions} from '../../modules/tags'
 import GlobalStyle from '../../styled/GlobalStyles'
+import type {Asset, Folder, Tag} from '../../types'
 import Controls from '../Controls'
 import DebugControls from '../DebugControls'
 import Dialogs from '../Dialogs'
+import FoldersPanel from '../FoldersPanel'
 import Header from '../Header'
 import Items from '../Items'
 import Notifications from '../Notifications'
@@ -68,11 +70,30 @@ const BrowserContent = ({onClose}: {onClose?: AssetSourceComponentProps['onClose
       }
     }
 
+    const handleFolderUpdate = (update: MutationEvent) => {
+      const {documentId, result, transition} = update
+
+      if (transition === 'appear') {
+        dispatch(foldersActions.listenerCreateQueue({folder: result as unknown as Folder}))
+      }
+
+      if (transition === 'disappear') {
+        dispatch(foldersActions.listenerDeleteQueue({folderId: documentId}))
+      }
+
+      if (transition === 'update') {
+        dispatch(foldersActions.listenerUpdateQueue({folder: result as unknown as Folder}))
+      }
+    }
+
     // Fetch assets: first page
     dispatch(assetsActions.loadPageIndex({pageIndex: 0}))
 
     // Fetch all tags
     dispatch(tagsActions.fetchRequest())
+
+    // Fetch all folders
+    dispatch(foldersActions.fetchRequest())
 
     // Listen for asset and tag changes in published documents.
     // Remember that Sanity listeners ignore joins, order clauses and projections!
@@ -88,9 +109,14 @@ const BrowserContent = ({onClose}: {onClose?: AssetSourceComponentProps['onClose
       .listen(groq`*[_type == "${TAG_DOCUMENT_NAME}" && !(_id in path("drafts.**"))]`)
       .subscribe(handleTagUpdate)
 
+    const subscriptionFolder = client
+      .listen(groq`*[_type == "${FOLDER_DOCUMENT_NAME}" && !(_id in path("drafts.**"))]`)
+      .subscribe(handleFolderUpdate)
+
     return () => {
       subscriptionAsset?.unsubscribe()
       subscriptionTag?.unsubscribe()
+      subscriptionFolder?.unsubscribe()
     }
   }, [client, dispatch])
 
@@ -109,6 +135,7 @@ const BrowserContent = ({onClose}: {onClose?: AssetSourceComponentProps['onClose
             <Controls />
 
             <Flex flex={1}>
+              <FoldersPanel />
               <Flex align="flex-end" direction="column" flex={1} style={{position: 'relative'}}>
                 <PickedBar />
                 <Items />

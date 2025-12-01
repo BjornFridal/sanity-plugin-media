@@ -2,7 +2,11 @@ import type {Dialog} from '../../types'
 
 import useTypedSelector from '../../hooks/useTypedSelector'
 import DialogAssetEdit from '../DialogAssetEdit'
+import DialogAssetMoveToFolder from '../DialogAssetMoveToFolder'
 import DialogConfirm from '../DialogConfirm'
+import DialogFolderCreate from '../DialogFolderCreate'
+import DialogFolderEdit from '../DialogFolderEdit'
+import DialogFolderMoveToFolder from '../DialogFolderMoveToFolder'
 import DialogSearchFacets from '../DialogSearchFacets'
 import DialogTagCreate from '../DialogTagCreate'
 import DialogTagEdit from '../DialogTagEdit'
@@ -28,11 +32,43 @@ const Dialogs = () => {
       )
     }
 
+    if (dialog.type === 'assetMoveToFolder') {
+      return (
+        <DialogAssetMoveToFolder dialog={dialog} key={index}>
+          {childDialogs}
+        </DialogAssetMoveToFolder>
+      )
+    }
+
     if (dialog.type === 'confirm') {
       return (
         <DialogConfirm dialog={dialog} key={index}>
           {childDialogs}
         </DialogConfirm>
+      )
+    }
+
+    if (dialog.type === 'folderCreate') {
+      return (
+        <DialogFolderCreate dialog={dialog} key={index}>
+          {childDialogs}
+        </DialogFolderCreate>
+      )
+    }
+
+    if (dialog.type === 'folderEdit') {
+      return (
+        <DialogFolderEdit dialog={dialog} key={index}>
+          {childDialogs}
+        </DialogFolderEdit>
+      )
+    }
+
+    if (dialog.type === 'folderMoveToFolder') {
+      return (
+        <DialogFolderMoveToFolder dialog={dialog} key={index}>
+          {childDialogs}
+        </DialogFolderMoveToFolder>
       )
     }
 

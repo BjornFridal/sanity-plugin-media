@@ -1,9 +1,9 @@
 import {type AnyAction, configureStore, type Store} from '@reduxjs/toolkit'
 import type {SanityClient} from '@sanity/client'
-import type {AssetSourceComponentProps, SanityDocument} from 'sanity'
 import {Component, type ReactNode} from 'react'
 import {Provider} from 'react-redux'
 import {createEpicMiddleware} from 'redux-observable'
+import type {AssetSourceComponentProps, SanityDocument} from 'sanity'
 import {rootEpic, rootReducer} from '../../modules'
 import {initialState as assetsInitialState} from '../../modules/assets'
 // import {assetsActions} from '../../modules/assets'
@@ -60,6 +60,16 @@ class ReduxProvider extends Component<Props> {
           enabled: false
         },
         dialog: {items: []},
+        folders: {
+          allIds: [],
+          byIds: {},
+          creating: false,
+          currentFolderId: null,
+          expandedFolderIds: [],
+          fetchCount: -1,
+          fetching: false,
+          panelVisible: true
+        },
         notifications: {items: []},
         search: {facets: [], query: ''},
         selected: {

@@ -6,10 +6,11 @@ import {useDispatch} from 'react-redux'
 import {styled} from 'styled-components'
 import {useAssetSourceActions} from '../../contexts/AssetSourceDispatchContext'
 import {DropzoneDispatchProvider} from '../../contexts/DropzoneDispatchContext'
+import {useToolOptions} from '../../contexts/ToolOptionsContext'
 import useTypedSelector from '../../hooks/useTypedSelector'
+import {selectCurrentFolderId} from '../../modules/folders'
 import {notificationsActions} from '../../modules/notifications'
 import {uploadsActions} from '../../modules/uploads'
-import {useToolOptions} from '../../contexts/ToolOptionsContext'
 
 type Props = {
   children: ReactNode
@@ -72,6 +73,7 @@ const UploadDropzone = (props: Props) => {
   // Redux
   const dispatch = useDispatch()
   const assetTypes = useTypedSelector(state => state.assets.assetTypes)
+  const currentFolderId = useTypedSelector(selectCurrentFolderId)
 
   const isImageAssetType = assetTypes.length === 1 && assetTypes[0] === 'image'
 
@@ -81,6 +83,7 @@ const UploadDropzone = (props: Props) => {
       dispatch(
         uploadsActions.uploadRequest({
           file,
+          folderId: currentFolderId,
           forceAsAssetType: assetTypes.length === 1 ? assetTypes[0] : undefined
         })
       )

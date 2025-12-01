@@ -32,6 +32,7 @@ import constructFilter from '../../utils/constructFilter'
 import {searchActions} from '../search'
 import type {RootReducerState} from '../types'
 import {UPLOADS_ACTIONS} from '../uploads/actions'
+import {foldersActions} from '../folders'
 import {ASSETS_ACTIONS} from './actions'
 type ItemError = {
   description: string
@@ -140,6 +141,30 @@ const assetsSlice = createSlice({
         const {assets} = action.payload
         assets.forEach(asset => {
           state.byIds[asset.asset._id].updating = true
+        })
+      })
+      .addCase(ASSETS_ACTIONS.moveToFolderComplete, (state, action) => {
+        const {assets} = action.payload
+        assets.forEach(asset => {
+          if (state.byIds[asset._id]) {
+            state.byIds[asset._id].updating = false
+          }
+        })
+      })
+      .addCase(ASSETS_ACTIONS.moveToFolderError, (state, action) => {
+        const {assets} = action.payload
+        assets.forEach(asset => {
+          if (state.byIds[asset._id]) {
+            state.byIds[asset._id].updating = false
+          }
+        })
+      })
+      .addCase(ASSETS_ACTIONS.moveToFolderRequest, (state, action) => {
+        const {assets} = action.payload
+        assets.forEach(asset => {
+          if (state.byIds[asset._id]) {
+            state.byIds[asset._id].updating = true
+          }
         })
       })
   },
@@ -458,6 +483,7 @@ export const assetsFetchPageIndexEpic: MyEpic = (action$, state$) =>
 
       const constructedFilter = constructFilter({
         assetTypes: state.assets.assetTypes,
+        currentFolderId: state.folders.currentFolderId,
         searchFacets: state.search.facets,
         searchQuery: state.search.query
       })
@@ -723,6 +749,70 @@ export const assetsTagsRemoveEpic: MyEpic = (action$, state$, {client}) => {
   )
 }
 
+// Patch operation to set folder on an asset
+const patchOperationFolderSet =
+  ({folderId}: {folderId: string | null}) =>
+  (patch: Patch) => {
+    if (folderId === null) {
+      // Remove folder assignment
+      return patch.unset(['opt.media.folder'])
+    }
+    // Set folder reference
+    return patch
+      .setIfMissing({opt: {}})
+      .setIfMissing({'opt.media': {}})
+      .set({
+        'opt.media.folder': {
+          _ref: folderId,
+          _type: 'reference',
+          _weak: true
+        }
+      })
+  }
+
+// On assets move to folder request: batch update assets with folder reference
+// On assets move to folder request: batch update assets with folder reference
+export const assetsMoveToFolderEpic: MyEpic = (action$, state$, {client}) => {
+  return action$.pipe(
+    filter(ASSETS_ACTIONS.moveToFolderRequest.match),
+    withLatestFrom(state$),
+    mergeMap(([action, state]) => {
+      const {assets, folderId} = action.payload
+
+      return of(action).pipe(
+        debugThrottle(state.debug.badConnection),
+        mergeMap(() => {
+          const transaction: Transaction = assets.reduce(
+            (tx, asset) => tx.patch(asset._id, patchOperationFolderSet({folderId})),
+            client.transaction()
+          )
+
+          return from(transaction.commit())
+        }),
+        mergeMap(() =>
+          of(
+            ASSETS_ACTIONS.moveToFolderComplete({assets, folderId}),
+            assetsActions.clear(),
+            assetsActions.loadPageIndex({pageIndex: 0})
+          )
+        ),
+        catchError((error: ClientError) =>
+          of(
+            ASSETS_ACTIONS.moveToFolderError({
+              assets,
+              error: {
+                message: error?.message || 'Internal error',
+                statusCode: error?.statusCode || 500
+              },
+              folderId
+            })
+          )
+        )
+      )
+    })
+  )
+}
+
 export const assetsUnpickEpic: MyEpic = action$ =>
   action$.pipe(
     ofType(
@@ -739,6 +829,14 @@ export const assetsUnpickEpic: MyEpic = action$ =>
     ),
     mergeMap(() => {
       return of(assetsActions.pickClear())
+    })
+  )
+
+export const assetsNavigateToFolderEpic: MyEpic = action$ =>
+  action$.pipe(
+    filter(foldersActions.navigateToFolder.match),
+    mergeMap(() => {
+      return of(assetsActions.clear(), assetsActions.loadPageIndex({pageIndex: 0}))
     })
   )
 

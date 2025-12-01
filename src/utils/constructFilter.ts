@@ -1,14 +1,15 @@
-import type {AssetType, SearchFacetInputProps} from '../types'
 import groq from 'groq'
-
 import {operators} from '../config/searchFacets'
+import type {AssetType, SearchFacetInputProps} from '../types'
 
 const constructFilter = ({
   assetTypes,
+  currentFolderId,
   searchFacets,
   searchQuery
 }: {
   assetTypes: AssetType[]
+  currentFolderId?: string | null
   searchFacets: SearchFacetInputProps[]
   searchQuery?: string
 }): string => {
@@ -75,10 +76,22 @@ const constructFilter = ({
     return acc
   }, [])
 
+  // Folder filter
+  let folderFilter = null
+  if (!searchQuery) {
+    if (currentFolderId === null) {
+      folderFilter = groq`!defined(opt.media.folder)` // Root level - no folder assigned
+    } else if (currentFolderId !== undefined) {
+      folderFilter = groq`opt.media.folder._ref == "${currentFolderId}"` // Specific folder
+    }
+  }
+
   // Join separate filter fragments
   const constructedQuery = [
     // Base filter
     baseFilter,
+    // Folder filter (if enabled)
+    ...(folderFilter ? [folderFilter] : []),
     // Search query (if present)
     // NOTE: Currently this only searches direct fields on sanity.fileAsset/sanity.imageAsset and NOT referenced tags
     // It's possible to add this by adding the following line to the searchQuery, but it's quite slow

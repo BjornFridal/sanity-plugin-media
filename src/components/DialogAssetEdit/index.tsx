@@ -1,18 +1,20 @@
 import {zodResolver} from '@hookform/resolvers/zod'
 import type {MutationEvent} from '@sanity/client'
 import {Box, Button, Card, Flex, Stack, Tab, TabList, TabPanel, Text} from '@sanity/ui'
-import type {Asset, AssetFormData, DialogAssetEditProps, TagSelectOption} from '../../types'
 import groq from 'groq'
 import {type ReactNode, useCallback, useEffect, useRef, useState} from 'react'
 import {type SubmitHandler, useForm} from 'react-hook-form'
 import {useDispatch} from 'react-redux'
-import {WithReferringDocuments, useColorSchemeValue, useDocumentStore} from 'sanity'
+import {useColorSchemeValue, useDocumentStore, WithReferringDocuments} from 'sanity'
+import {useToolOptions} from '../../contexts/ToolOptionsContext'
 import {assetFormSchema} from '../../formSchema'
 import useTypedSelector from '../../hooks/useTypedSelector'
 import useVersionedClient from '../../hooks/useVersionedClient'
 import {assetsActions, selectAssetById} from '../../modules/assets'
 import {dialogActions} from '../../modules/dialog'
+import {selectBreadcrumbsForFolder, selectFolderSelectOption} from '../../modules/folders'
 import {selectTags, selectTagSelectOptions, tagsActions} from '../../modules/tags'
+import type {Asset, AssetFormData, DialogAssetEditProps, TagSelectOption} from '../../types'
 import getTagSelectOptions from '../../utils/getTagSelectOptions'
 import {getUniqueDocuments} from '../../utils/getUniqueDocuments'
 import imageDprUrl from '../../utils/imageDprUrl'
@@ -27,7 +29,6 @@ import FormFieldInputText from '../FormFieldInputText'
 import FormFieldInputTextarea from '../FormFieldInputTextarea'
 import FormSubmitButton from '../FormSubmitButton'
 import Image from '../Image'
-import {useToolOptions} from '../../contexts/ToolOptionsContext'
 
 type Props = {
   children: ReactNode
@@ -60,6 +61,17 @@ const DialogAssetEdit = (props: Props) => {
 
   const assetTagOptions = useTypedSelector(selectTagSelectOptions(currentAsset))
 
+  // Get breadcrumbs for the current asset's folder
+  const folderId = currentAsset?.opt?.media?.folder?._ref
+  const breadcrumbs = useTypedSelector(state => selectBreadcrumbsForFolder(state, folderId))
+
+  // Get folder option for the current asset
+  const folderOption = useTypedSelector(selectFolderSelectOption(folderId))
+
+  // Construct folder path string
+  const folderPath =
+    breadcrumbs.length > 0 ? breadcrumbs.map(item => item.folder.name.current).join(' / ') : 'Root'
+
   // Check if credit line options are configured
   const {creditLine} = useToolOptions()
 
@@ -70,11 +82,11 @@ const DialogAssetEdit = (props: Props) => {
         creditLine: asset?.creditLine || '',
         description: asset?.description || '',
         originalFilename: asset?.originalFilename || '',
-        opt: {media: {tags: assetTagOptions}},
+        opt: {media: {folder: folderOption as any, tags: assetTagOptions}},
         title: asset?.title || ''
       }
     },
-    [assetTagOptions]
+    [assetTagOptions, folderOption]
   )
 
   const {
@@ -106,7 +118,7 @@ const DialogAssetEdit = (props: Props) => {
     dispatch(
       dialogActions.showConfirmDeleteAssets({
         assets: [assetItem],
-        closeDialogId: assetItem?.asset._id
+        closeDialogId: assetItem.asset._id
       })
     )
   }, [assetItem, dispatch])
@@ -151,6 +163,12 @@ const DialogAssetEdit = (props: Props) => {
             opt: {
               media: {
                 ...sanitizedFormData.opt.media,
+                folder: sanitizedFormData.opt.media.folder
+                  ? {
+                      _ref: sanitizedFormData.opt.media.folder.value,
+                      _type: 'reference'
+                    }
+                  : null,
                 tags:
                   sanitizedFormData.opt.media.tags?.map((tag: TagSelectOption) => ({
                     _ref: tag.value,
@@ -185,7 +203,9 @@ const DialogAssetEdit = (props: Props) => {
   // Update tags form field (react-select) when a new _inline_ tag has been created
   useEffect(() => {
     if (lastCreatedTag) {
-      const existingTags = (getValues('opt.media.tags') as TagSelectOption[]) || []
+      const existingTags = (values => (values ? (values as TagSelectOption[]) : []))(
+        getValues('opt.media.tags')
+      )
       const updatedTags = existingTags.concat([lastCreatedTag])
       setValue('opt.media.tags', updatedTags, {shouldDirty: true})
     }
@@ -194,7 +214,9 @@ const DialogAssetEdit = (props: Props) => {
   // Update tags form field (react-select) when an _inline_ tag has been removed elsewhere
   useEffect(() => {
     if (lastRemovedTagIds) {
-      const existingTags = (getValues('opt.media.tags') as TagSelectOption[]) || []
+      const existingTags = (values => (values ? (values as TagSelectOption[]) : []))(
+        getValues('opt.media.tags')
+      )
       const updatedTags = existingTags.filter(tag => {
         return !lastRemovedTagIds.includes(tag.value)
       })
@@ -214,15 +236,17 @@ const DialogAssetEdit = (props: Props) => {
   const Footer = () => (
     <Box padding={3}>
       <Flex justify="space-between">
-        {/* Delete button */}
-        <Button
-          disabled={formUpdating}
-          fontSize={1}
-          mode="bleed"
-          onClick={handleDelete}
-          text="Delete"
-          tone="critical"
-        />
+        <Flex gap={2}>
+          {/* Delete button */}
+          <Button
+            disabled={formUpdating}
+            fontSize={1}
+            mode="bleed"
+            onClick={handleDelete}
+            text="Delete"
+            tone="critical"
+          />
+        </Flex>
 
         {/* Submit button */}
         <FormSubmitButton
@@ -305,6 +329,16 @@ const DialogAssetEdit = (props: Props) => {
                       id="details-panel"
                     >
                       <Stack space={3}>
+                        {/* Folder Path */}
+                        <Box>
+                          <Text size={1} weight="semibold" style={{marginBottom: '0.5em'}}>
+                            Location
+                          </Text>
+                          <Text size={1} muted>
+                            {folderPath}
+                          </Text>
+                        </Box>
+
                         {/* Tags */}
                         <FormFieldInputTags
                           control={control}

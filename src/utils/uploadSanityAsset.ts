@@ -2,9 +2,9 @@
 // https://github.com/sanity-io/sanity/blob/ccb777e115a8cdf20d81a9a2bc9d8c228568faff/packages/%40sanity/form-builder/src/sanity/inputs/client-adapters/assets.ts
 
 import type {SanityAssetDocument, SanityClient, SanityImageAssetDocument} from '@sanity/client'
-import type {HttpError} from '../types'
 import {Observable, of, throwError} from 'rxjs'
 import {map, mergeMap} from 'rxjs/operators'
+import type {HttpError} from '../types'
 import {withMaxConcurrency} from './withMaxConcurrency'
 
 const fetchExisting$ = (client: SanityClient, type: string, hash: string) => {
@@ -54,7 +54,8 @@ const uploadSanityAsset$ = (
   client: SanityClient,
   assetType: 'file' | 'image',
   file: File,
-  hash: string
+  hash: string,
+  folderId?: string | null
 ) => {
   return of(null).pipe(
     // NOTE: the sanity api will still dedupe unique files, but this saves us from uploading the asset file entirely
@@ -89,6 +90,25 @@ const uploadSanityAsset$ = (
               : event
           )
         )
+    }),
+    // Apply folder reference if folderId is provided
+    mergeMap(event => {
+      if (event.type === 'complete' && folderId) {
+        return client.observable
+          .patch(event.asset._id)
+          .setIfMissing({opt: {}})
+          .setIfMissing({'opt.media': {}})
+          .set({
+            'opt.media.folder': {
+              _ref: folderId,
+              _type: 'reference',
+              _weak: true
+            }
+          })
+          .commit()
+          .pipe(map(() => event))
+      }
+      return of(event)
     })
   )
 }

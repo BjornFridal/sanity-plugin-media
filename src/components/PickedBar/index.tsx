@@ -6,6 +6,7 @@ import {PANEL_HEIGHT} from '../../constants'
 import useTypedSelector from '../../hooks/useTypedSelector'
 import {assetsActions, selectAssetsPicked} from '../../modules/assets'
 import {dialogActions} from '../../modules/dialog'
+import {DIALOG_ACTIONS} from '../../modules/dialog/actions'
 import {getSchemeColor} from '../../utils/getSchemeColor'
 
 const PickedBar = () => {
@@ -18,6 +19,11 @@ const PickedBar = () => {
   // Callbacks
   const handlePickClear = () => {
     dispatch(assetsActions.pickClear())
+  }
+
+  const handleMovePicked = () => {
+    const assetIds = assetsPicked.map(item => item.asset._id)
+    dispatch(DIALOG_ACTIONS.showAssetMoveToFolder({assetIds}))
   }
 
   const handleDeletePicked = () => {
@@ -56,6 +62,17 @@ const PickedBar = () => {
           tone="default"
         >
           <Label size={0}>Deselect</Label>
+        </Button>
+
+        {/* Move button */}
+        <Button
+          mode="bleed"
+          onClick={handleMovePicked}
+          padding={2}
+          style={{background: 'none', boxShadow: 'none'}}
+          tone="default"
+        >
+          <Label size={0}>Move</Label>
         </Button>
 
         {/* Delete button */}

@@ -1,9 +1,11 @@
-import {DownloadIcon} from '@sanity/icons'
+import {DownloadIcon, FolderIcon} from '@sanity/icons'
 import {Box, Button, Flex, Inline, Stack, Text} from '@sanity/ui'
 import type {Asset, AssetItem} from '../../types'
 import format from 'date-fns/format'
 import filesize from 'filesize'
 import {type ReactNode} from 'react'
+import {useDispatch} from 'react-redux'
+import {DIALOG_ACTIONS} from '../../modules/dialog/actions'
 import getAssetResolution from '../../utils/getAssetResolution'
 import {isImageAsset} from '../../utils/typeGuards'
 import ButtonAssetCopy from '../ButtonAssetCopy'
@@ -43,12 +45,19 @@ const Row = ({label, value}: {label: string; value: ReactNode}) => {
 
 const AssetMetadata = (props: Props) => {
   const {asset, item} = props
+  const dispatch = useDispatch()
 
   const exif = asset?.metadata?.exif
 
   // Callbacks
   const handleDownload = () => {
     window.location.href = `${asset.url}?dl=${asset.originalFilename}`
+  }
+
+  const handleMove = () => {
+    if (asset) {
+      dispatch(DIALOG_ACTIONS.showAssetMoveToFolder({assetIds: [asset._id]}))
+    }
   }
 
   return (
@@ -109,6 +118,15 @@ const AssetMetadata = (props: Props) => {
             mode="ghost"
             onClick={handleDownload}
             text="Download"
+          />
+          {/* Move */}
+          <Button
+            disabled={!item || item?.updating}
+            fontSize={1}
+            icon={FolderIcon}
+            mode="ghost"
+            onClick={handleMove}
+            text="Move"
           />
           {/* Copy to clipboard */}
           <ButtonAssetCopy disabled={!item || item?.updating} url={asset.url} />

@@ -1,11 +1,12 @@
-import {type PayloadAction, createSlice} from '@reduxjs/toolkit'
-import type {ImageAsset, MyEpic} from '../../types'
+import {createSlice, type PayloadAction} from '@reduxjs/toolkit'
 import pluralize from 'pluralize'
 import {ofType} from 'redux-observable'
 import {of} from 'rxjs'
-import {bufferTime, filter, mergeMap} from 'rxjs/operators'
+import {bufferTime, filter, mergeMap, withLatestFrom} from 'rxjs/operators'
+import type {ImageAsset, MyEpic} from '../../types'
 import {assetsActions} from '../assets'
 import {ASSETS_ACTIONS} from '../assets/actions'
+import {foldersActions} from '../folders'
 import {tagsActions} from '../tags'
 import {uploadsActions} from '../uploads'
 
@@ -89,6 +90,29 @@ export const notificationsAssetsUploadCompleteEpic: MyEpic = action$ =>
     })
   )
 
+export const notificationsAssetsMoveToFolderCompleteEpic: MyEpic = (action$, state$) =>
+  action$.pipe(
+    filter(ASSETS_ACTIONS.moveToFolderComplete.match),
+    withLatestFrom(state$),
+    mergeMap(([action, state]) => {
+      const count = action?.payload?.assets?.length
+      const {folderId} = action.payload
+
+      // Get folder name from state
+      let folderName = 'Root'
+      if (folderId && state.folders.byIds[folderId]) {
+        folderName = state.folders.byIds[folderId].folder.name.current
+      }
+
+      return of(
+        notificationsSlice.actions.add({
+          status: 'info',
+          title: `Moved ${count} ${pluralize('asset', count)} to ${folderName}`
+        })
+      )
+    })
+  )
+
 export const notificationsAssetsTagsAddCompleteEpic: MyEpic = action$ =>
   action$.pipe(
     filter(ASSETS_ACTIONS.tagsAddComplete.match),
@@ -155,6 +179,62 @@ export const notificationsGenericErrorEpic: MyEpic = action$ =>
     })
   )
 
+// Folder notifications
+export const notificationsFolderCreateCompleteEpic: MyEpic = action$ =>
+  action$.pipe(
+    filter(foldersActions.createComplete.match),
+    mergeMap(() => of(notificationsSlice.actions.add({title: `Folder created`})))
+  )
+
+export const notificationsFolderDeleteCompleteEpic: MyEpic = action$ =>
+  action$.pipe(
+    filter(foldersActions.deleteComplete.match),
+    mergeMap(() => of(notificationsSlice.actions.add({title: `Folder deleted`})))
+  )
+
+export const notificationsFolderDeleteErrorEpic: MyEpic = action$ =>
+  action$.pipe(
+    filter(foldersActions.deleteError.match),
+    mergeMap(action => {
+      const {error} = action.payload
+      return of(
+        notificationsSlice.actions.add({
+          status: 'error',
+          title: error?.message || 'Unable to delete folder'
+        })
+      )
+    })
+  )
+
+export const notificationsFolderUpdateCompleteEpic: MyEpic = action$ =>
+  action$.pipe(
+    filter(foldersActions.updateComplete.match),
+    mergeMap(() => of(notificationsSlice.actions.add({title: `Folder updated`})))
+  )
+
+export const notificationsFolderMoveCompleteEpic: MyEpic = (action$, state$) =>
+  action$.pipe(
+    filter(foldersActions.moveComplete.match),
+    withLatestFrom(state$),
+    mergeMap(([action, state]) => {
+      const {folder} = action.payload
+      const parentId = folder.parent?._ref
+
+      // Get destination folder name from state
+      let destinationName = 'Root'
+      if (parentId && state.folders.byIds[parentId]) {
+        destinationName = state.folders.byIds[parentId].folder.name.current
+      }
+
+      return of(
+        notificationsSlice.actions.add({
+          title: `Folder moved to ${destinationName}`
+        })
+      )
+    })
+  )
+
+// Tag notifications
 export const notificationsTagCreateCompleteEpic: MyEpic = action$ =>
   action$.pipe(
     filter(tagsActions.createComplete.match),

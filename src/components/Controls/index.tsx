@@ -2,8 +2,10 @@ import {Box, Button, Flex, Inline, useMediaIndex} from '@sanity/ui'
 import {useDispatch} from 'react-redux'
 import useTypedSelector from '../../hooks/useTypedSelector'
 import {dialogActions} from '../../modules/dialog'
+import {foldersActions} from '../../modules/folders'
 import {tagsActions} from '../../modules/tags'
 import ButtonViewGroup from '../ButtonViewGroup'
+import FolderIcon from '../FolderIcon'
 import OrderSelect from '../OrderSelect'
 import Progress from '../Progress'
 import SearchFacets from '../SearchFacets'
@@ -17,6 +19,7 @@ const Controls = () => {
   const fetching = useTypedSelector(state => state.assets.fetching)
   const pageIndex = useTypedSelector(state => state.assets.pageIndex)
   const searchFacets = useTypedSelector(state => state.search.facets)
+  const foldersPanelVisible = useTypedSelector(state => state.folders.panelVisible)
   const tagsPanelVisible = useTypedSelector(state => state.tags.panelVisible)
 
   const mediaIndex = useMediaIndex()
@@ -28,6 +31,10 @@ const Controls = () => {
 
   const handleShowTagsDialog = () => {
     dispatch(dialogActions.showTags())
+  }
+
+  const toggleFoldersPanelToggle = () => {
+    dispatch(foldersActions.panelVisibleSet({panelVisible: !foldersPanelVisible}))
   }
 
   const toggleTagsPanelToggle = () => {
@@ -100,14 +107,27 @@ const Controls = () => {
 
       <Box>
         <Flex align="center" justify={['space-between']}>
-          {/* Views */}
-          <Box marginX={2}>
+          <Flex paddingX={2}>
             <ButtonViewGroup />
-          </Box>
+          </Flex>
 
           <Flex marginX={2}>
             {/* Orders */}
             <OrderSelect />
+            {/* Folders panel toggle */}
+            <Box display={['none', 'none', 'block']} marginLeft={2}>
+              <Button
+                fontSize={1}
+                icon={
+                  <Box style={{transform: 'scale(0.75)'}}>
+                    <FolderIcon />
+                  </Box>
+                }
+                onClick={toggleFoldersPanelToggle}
+                mode={foldersPanelVisible ? 'default' : 'ghost'}
+                text={foldersPanelVisible ? 'Folders' : ''}
+              />
+            </Box>
             {/* Tags panel toggle */}
             <Box display={['none', 'none', 'block']} marginLeft={2}>
               <Button

@@ -1,10 +1,10 @@
+import {divider, inputs} from './config/searchFacets'
 import type {
-  SearchFacetInputProps,
+  OrderDirection,
   SearchFacetDivider,
   SearchFacetGroup,
-  OrderDirection
+  SearchFacetInputProps
 } from './types'
-import {divider, inputs} from './config/searchFacets'
 
 // Sort order dropdown options
 // null values are represented as menu dividers
@@ -75,6 +75,8 @@ export const GRID_TEMPLATE_COLUMNS = {
   SMALL: '3rem 100px auto 1.5rem',
   LARGE: '3rem 100px auto 5.5rem 5.5rem 3.5rem 8.5rem 4.75rem 2rem'
 }
+export const FOLDER_DOCUMENT_NAME = 'media.folder'
+export const FOLDERS_PANEL_WIDTH = 250 // px
 export const PANEL_HEIGHT = 32 // px
 export const TAG_DOCUMENT_NAME = 'media.tag'
 export const TAGS_PANEL_WIDTH = 250 // px

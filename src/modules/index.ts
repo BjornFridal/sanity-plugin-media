@@ -1,8 +1,8 @@
 import {
   type ActionFromReducersMapObject,
+  combineReducers,
   type Reducer,
-  type StateFromReducersMapObject,
-  combineReducers
+  type StateFromReducersMapObject
 } from '@reduxjs/toolkit'
 import {combineEpics} from 'redux-observable'
 
@@ -15,6 +15,8 @@ import assetsReducer, {
   assetsListenerCreateQueueEpic,
   assetsListenerDeleteQueueEpic,
   assetsListenerUpdateQueueEpic,
+  assetsMoveToFolderEpic,
+  assetsNavigateToFolderEpic,
   assetsOrderSetEpic,
   assetsSearchEpic,
   assetsSortEpic,
@@ -29,19 +31,37 @@ import dialogReducer, {
   dialogTagCreateEpic,
   dialogTagDeleteEpic
 } from './dialog'
-import selectedReducer from './selected'
+import foldersReducer, {
+  foldersCreateEpic,
+  foldersDeleteEpic,
+  foldersFetchEpic,
+  foldersListenerCreateQueueEpic,
+  foldersListenerDeleteQueueEpic,
+  foldersListenerUpdateQueueEpic,
+  foldersMoveEpic,
+  foldersSortEpic,
+  foldersUpdateEpic
+} from './folders'
 import notificationsReducer, {
-  notificationsAssetsDeleteErrorEpic,
   notificationsAssetsDeleteCompleteEpic,
+  notificationsAssetsDeleteErrorEpic,
+  notificationsAssetsMoveToFolderCompleteEpic,
   notificationsAssetsTagsAddCompleteEpic,
   notificationsAssetsTagsRemoveCompleteEpic,
   notificationsAssetsUpdateCompleteEpic,
+  notificationsAssetsUploadCompleteEpic,
+  notificationsFolderCreateCompleteEpic,
+  notificationsFolderDeleteCompleteEpic,
+  notificationsFolderDeleteErrorEpic,
+  notificationsFolderMoveCompleteEpic,
+  notificationsFolderUpdateCompleteEpic,
   notificationsGenericErrorEpic,
   notificationsTagCreateCompleteEpic,
   notificationsTagDeleteCompleteEpic,
   notificationsTagUpdateCompleteEpic
 } from './notifications'
 import searchReducer, {searchFacetTagUpdateEpic} from './search'
+import selectedReducer from './selected'
 import tagsReducer, {
   tagsCreateEpic,
   tagsDeleteEpic,
@@ -68,6 +88,8 @@ export const rootEpic = combineEpics(
   assetsListenerCreateQueueEpic,
   assetsListenerDeleteQueueEpic,
   assetsListenerUpdateQueueEpic,
+  assetsMoveToFolderEpic,
+  assetsNavigateToFolderEpic,
   assetsOrderSetEpic,
   assetsSearchEpic,
   assetsSortEpic,
@@ -78,11 +100,27 @@ export const rootEpic = combineEpics(
   dialogClearOnAssetUpdateEpic,
   dialogTagCreateEpic,
   dialogTagDeleteEpic,
+  foldersCreateEpic,
+  foldersDeleteEpic,
+  foldersFetchEpic,
+  foldersListenerCreateQueueEpic,
+  foldersListenerDeleteQueueEpic,
+  foldersListenerUpdateQueueEpic,
+  foldersMoveEpic,
+  foldersSortEpic,
+  foldersUpdateEpic,
   notificationsAssetsDeleteErrorEpic,
   notificationsAssetsDeleteCompleteEpic,
+  notificationsAssetsMoveToFolderCompleteEpic,
   notificationsAssetsTagsAddCompleteEpic,
   notificationsAssetsTagsRemoveCompleteEpic,
   notificationsAssetsUpdateCompleteEpic,
+  notificationsAssetsUploadCompleteEpic,
+  notificationsFolderCreateCompleteEpic,
+  notificationsFolderDeleteCompleteEpic,
+  notificationsFolderDeleteErrorEpic,
+  notificationsFolderMoveCompleteEpic,
+  notificationsFolderUpdateCompleteEpic,
   notificationsGenericErrorEpic,
   notificationsTagCreateCompleteEpic,
   notificationsTagDeleteCompleteEpic,
@@ -106,6 +144,7 @@ const reducers = {
   assets: assetsReducer,
   debug: debugReducer,
   dialog: dialogReducer,
+  folders: foldersReducer,
   notifications: notificationsReducer,
   search: searchReducer,
   selected: selectedReducer,

@@ -7,7 +7,13 @@ import type {
 } from '@sanity/client'
 import type {Epic} from 'redux-observable'
 import * as z from 'zod'
-import {assetFormSchema, tagFormSchema, tagOptionSchema} from '../formSchema'
+import {
+  assetFormSchema,
+  folderFormSchema,
+  folderOptionSchema,
+  tagFormSchema,
+  tagOptionSchema
+} from '../formSchema'
 import type {RootReducerState} from '../modules/types'
 
 export type MediaToolOptions = {
@@ -23,6 +29,7 @@ type CustomFields = {
   description?: string
   opt?: {
     media?: {
+      folder?: SanityReference
       tags?: SanityReference[]
     }
   }
@@ -76,13 +83,17 @@ export type CardUploadData = {
 
 export type Dialog =
   | DialogAssetEditProps
+  | DialogAssetMoveToFolderProps
   | DialogConfirmProps
+  | DialogFolderCreateProps
+  | DialogFolderEditProps
+  | DialogFolderMoveToFolderProps
   | DialogSearchFacetsProps
   | DialogTagCreateProps
   | DialogTagEditProps
   | DialogTagsProps
 
-export type DialogAction = 'deleteAsset' | 'deleteTag'
+export type DialogAction = 'deleteAsset' | 'deleteFolder' | 'deleteTag'
 
 export type DialogAssetEditProps = {
   assetId?: string
@@ -131,6 +142,34 @@ export type DialogTagEditProps = {
   id: string
   tagId?: string
   type: 'tagEdit'
+}
+
+export type DialogFolderCreateProps = {
+  closeDialogId?: string
+  id: string
+  parentId?: string
+  type: 'folderCreate'
+}
+
+export type DialogFolderEditProps = {
+  closeDialogId?: string
+  folderId?: string
+  id: string
+  type: 'folderEdit'
+}
+
+export type DialogFolderMoveToFolderProps = {
+  closeDialogId?: string
+  folderId: string
+  id: string
+  type: 'folderMoveToFolder'
+}
+
+export type DialogAssetMoveToFolderProps = {
+  assetIds: string[]
+  closeDialogId?: string
+  id: string
+  type: 'assetMoveToFolder'
 }
 
 export type Document = {
@@ -312,6 +351,36 @@ export type Span = {
   marks: string[]
 }
 
+export type Folder = Omit<SanityDocument, '_id'> & {
+  _id: string | null | undefined
+  name: {
+    _type: 'slug'
+    current: string
+  }
+  parent?: SanityReference
+}
+
+export type FolderActions = 'delete' | 'edit' | 'navigate'
+
+export type FolderFormData = z.infer<typeof folderFormSchema>
+
+export type FolderItem = {
+  _type: 'folder'
+  error?: HttpError
+  folder: Folder
+  picked: boolean
+  updating: boolean
+}
+
+export type FolderTreeItem = {
+  folder: FolderItem
+  depth: number
+  hasChildren: boolean
+  isExpanded: boolean
+}
+
+export type FolderSelectOption = z.infer<typeof folderOptionSchema>
+
 export type Tag = SanityDocument & {
   name: {
     _type: 'slug'
@@ -336,6 +405,7 @@ export type TagSelectOption = z.infer<typeof tagOptionSchema>
 export type UploadItem = {
   _type: 'upload'
   assetType: AssetType
+  folderId?: string | null
   hash: string
   name: string
   objectUrl?: string

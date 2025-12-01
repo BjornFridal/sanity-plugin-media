@@ -1,10 +1,10 @@
 import {createSelector, createSlice, type PayloadAction} from '@reduxjs/toolkit'
 import type {ClientError, SanityAssetDocument, SanityImageAssetDocument} from '@sanity/client'
-import type {HttpError, MyEpic, SanityUploadProgressEvent, UploadItem} from '../../types'
 import groq from 'groq'
 import type {Selector} from 'react-redux'
 import {empty, merge, of} from 'rxjs'
 import {catchError, delay, filter, mergeMap, takeUntil, withLatestFrom} from 'rxjs/operators'
+import type {HttpError, MyEpic, SanityUploadProgressEvent, UploadItem} from '../../types'
 import constructFilter from '../../utils/constructFilter'
 import {generatePreviewBlobUrl$} from '../../utils/generatePreviewBlobUrl'
 import {hashFile$, uploadAsset$} from '../../utils/uploadSanityAsset'
@@ -88,7 +88,11 @@ const uploadsSlice = createSlice({
     },
     uploadRequest(
       _state,
-      _action: PayloadAction<{file: File; forceAsAssetType?: 'file' | 'image'}>
+      _action: PayloadAction<{
+        file: File
+        folderId?: string | null
+        forceAsAssetType?: 'file' | 'image'
+      }>
     ) {
       //
     },
@@ -134,7 +138,9 @@ export const uploadsAssetStartEpic: MyEpic = (action$, _state$, {client}) =>
         // Upload asset and receive progress / complete events
         of(null).pipe(
           // delay(500000), // debug uploads
-          mergeMap(() => uploadAsset$(client, uploadItem.assetType, file, uploadItem.hash)),
+          mergeMap(() =>
+            uploadAsset$(client, uploadItem.assetType, file, uploadItem.hash, uploadItem.folderId)
+          ),
           takeUntil(
             action$.pipe(
               filter(uploadsActions.uploadCancel.match),
@@ -180,7 +186,7 @@ export const uploadsAssetUploadEpic: MyEpic = (action$, state$) =>
     filter(uploadsActions.uploadRequest.match),
     withLatestFrom(state$),
     mergeMap(([action, state]) => {
-      const {file, forceAsAssetType} = action.payload
+      const {file, folderId, forceAsAssetType} = action.payload
 
       return of(action).pipe(
         // Generate SHA1 hash from local file
@@ -197,6 +203,7 @@ export const uploadsAssetUploadEpic: MyEpic = (action$, state$) =>
           const uploadItem = {
             _type: 'upload',
             assetType,
+            folderId,
             hash,
             name: file.name,
             size: file.size,
