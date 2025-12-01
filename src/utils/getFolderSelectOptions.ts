@@ -1,11 +1,12 @@
+import {FOLDER_ROOT_ID} from '../constants'
 import type {FolderItem, FolderSelectOption} from '../types'
 
 const getFolderSelectOptions = (folders: FolderItem[]): FolderSelectOption[] => {
   const options: FolderSelectOption[] = []
 
-  const buildOptions = (parentId: string | null, depth: number) => {
+  const buildOptions = (parentId: string, depth: number) => {
     const children = folders.filter(item => {
-      const itemParentId = item.folder.parent?._ref || null
+      const itemParentId = item.folder.parent?._ref || FOLDER_ROOT_ID
       return itemParentId === parentId
     })
 
@@ -33,7 +34,7 @@ const getFolderSelectOptions = (folders: FolderItem[]): FolderSelectOption[] => 
     })
   }
 
-  buildOptions(null, 1)
+  buildOptions(FOLDER_ROOT_ID, 1)
 
   return options
 }

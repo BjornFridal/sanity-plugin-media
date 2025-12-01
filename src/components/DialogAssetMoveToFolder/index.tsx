@@ -2,6 +2,7 @@ import {Box, Button, Flex, Select, Stack, Text} from '@sanity/ui'
 import pluralize from 'pluralize'
 import {type ReactNode, useState} from 'react'
 import {useDispatch} from 'react-redux'
+import {FOLDER_ROOT_ID} from '../../constants'
 import useTypedSelector from '../../hooks/useTypedSelector'
 import {ASSETS_ACTIONS} from '../../modules/assets/actions'
 import {dialogActions} from '../../modules/dialog'
@@ -31,7 +32,7 @@ const DialogAssetMoveToFolder = (props: Props) => {
     .filter((asset): asset is Asset => Boolean(asset))
 
   // Determine default folder from the first asset
-  const defaultFolderId = assets[0]?.opt?.media?.folder?._ref || ''
+  const defaultFolderId = assets[0]?.opt?.media?.folder?._ref || FOLDER_ROOT_ID
 
   const [selectedFolderId, setSelectedFolderId] = useState<string>(defaultFolderId)
 
@@ -43,12 +44,10 @@ const DialogAssetMoveToFolder = (props: Props) => {
   const isUpdating = assets.some(asset => allAssets[asset._id]?.updating)
 
   const handleMove = () => {
-    const folderId = selectedFolderId === '' ? null : selectedFolderId
-
     dispatch(
       ASSETS_ACTIONS.moveToFolderRequest({
         assets,
-        folderId
+        folderId: selectedFolderId
       })
     )
   }
@@ -124,7 +123,7 @@ const DialogAssetMoveToFolder = (props: Props) => {
             padding={3}
             value={selectedFolderId}
           >
-            <option value="">Root</option>
+            <option value={FOLDER_ROOT_ID}>Root</option>
             {getFolderSelectOptions(folders).map(option => (
               <option key={option.value} value={option.value}>
                 {option.label}

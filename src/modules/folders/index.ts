@@ -675,7 +675,7 @@ export const selectCurrentFolder = createSelector(
 
 // Build breadcrumb trail for a specific folder
 export const selectBreadcrumbsForFolder = createSelector(
-  [selectFoldersByIds, (_state: RootReducerState, folderId: string | null | undefined) => folderId],
+  [selectFoldersByIds, (_state: RootReducerState, folderId: string) => folderId],
   (byIds, folderId) => {
     const breadcrumbs: FolderItem[] = []
     let currentId = folderId
@@ -684,7 +684,7 @@ export const selectBreadcrumbsForFolder = createSelector(
       const folderItem = byIds[currentId]
       if (!folderItem) break
       breadcrumbs.unshift(folderItem)
-      currentId = folderItem.folder.parent?._ref || null
+      currentId = folderItem.folder.parent?._ref || FOLDER_ROOT_ID
     }
 
     return breadcrumbs
@@ -718,11 +718,11 @@ export const selectFolderOptions = createSelector([selectFolders], (folders = []
 export const selectFolderTree = createSelector(
   [selectFolders, (state: RootReducerState) => state.folders.expandedFolderIds],
   (folders = [], expandedFolderIds) => {
-    const buildTree = (parentId: string | null = null, depth = 0): FolderTreeItem[] => {
+    const buildTree = (parentId: string, depth = 0): FolderTreeItem[] => {
       const items: FolderTreeItem[] = []
 
       const children = folders.filter(item => {
-        const itemParentId = item.folder.parent?._ref || null
+        const itemParentId = item.folder.parent?._ref || FOLDER_ROOT_ID
         return itemParentId === parentId
       })
 
@@ -752,7 +752,7 @@ export const selectFolderTree = createSelector(
       return folders.some(item => item.folder.parent?._ref === folderId)
     }
 
-    return buildTree()
+    return buildTree(FOLDER_ROOT_ID)
   }
 )
 
