@@ -12,7 +12,7 @@ const VirtualRow = memo(
     isScrolling,
     item
   }: {
-    currentFolderId: string | null | undefined
+    currentFolderId: string
     isScrolling?: boolean
     item: FolderTreeItem & {
       actions: FolderActions[]

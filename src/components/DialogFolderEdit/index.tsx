@@ -69,7 +69,7 @@ const DialogFolderEdit = (props: Props) => {
     const sanitizedFormData = sanitizeFormData(formData)
     dispatch(
       foldersActions.updateRequest({
-        closeDialogId: folderItem?.folder?._id || undefined,
+        closeDialogId: folderItem?.folder?._id,
         folder: folderItem?.folder,
         formData: {
           name: sanitizedFormData.name
@@ -85,7 +85,7 @@ const DialogFolderEdit = (props: Props) => {
 
     dispatch(
       dialogActions.showConfirmDeleteFolder({
-        closeDialogId: folderItem?.folder?._id || undefined,
+        closeDialogId: folderItem?.folder?._id,
         folder: folderItem?.folder
       })
     )

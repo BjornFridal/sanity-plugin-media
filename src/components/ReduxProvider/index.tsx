@@ -9,6 +9,7 @@ import {initialState as assetsInitialState} from '../../modules/assets'
 // import {assetsActions} from '../../modules/assets'
 // import {searchActions} from '../../modules/search'
 // import {uploadsActions} from '../../modules/uploads'
+import {FOLDER_ROOT_ID} from '../../constants'
 import type {RootReducerState} from '../../modules/types'
 import getDocumentAssetIds from '../../utils/getDocumentAssetIds'
 
@@ -64,7 +65,7 @@ class ReduxProvider extends Component<Props> {
           allIds: [],
           byIds: {},
           creating: false,
-          currentFolderId: null,
+          currentFolderId: FOLDER_ROOT_ID,
           expandedFolderIds: [],
           fetchCount: -1,
           fetching: false,

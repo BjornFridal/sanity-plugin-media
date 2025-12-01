@@ -24,7 +24,7 @@ export type FoldersReducerState = {
   byIds: Record<string, FolderItem>
   creating: boolean
   creatingError?: HttpError
-  currentFolderId: string | null | undefined // null = root, undefined = see all
+  currentFolderId: string
   expandedFolderIds: string[] // Track which folders are expanded in tree view
   fetchCount: number
   fetching: boolean
@@ -37,7 +37,7 @@ const initialState = {
   byIds: {},
   creating: false,
   creatingError: undefined,
-  currentFolderId: null, // Start at root
+  currentFolderId: FOLDER_ROOT_ID, // Start at root
   expandedFolderIds: [], // Start with all folders collapsed
   fetchCount: -1,
   fetching: false,
@@ -95,7 +95,7 @@ const foldersSlice = createSlice({
       // If we're currently in the deleted folder, navigate to its parent or root
       if (state.currentFolderId === folderId) {
         const folder = state.byIds[folderId]?.folder
-        state.currentFolderId = folder?.parent?._ref || null
+        state.currentFolderId = folder?.parent?._ref || FOLDER_ROOT_ID
       }
     },
     deleteError(state, action: PayloadAction<{error: HttpError; folderId: string}>) {
@@ -206,7 +206,7 @@ const foldersSlice = createSlice({
 
         // Navigate to root if current folder was deleted
         if (state.currentFolderId === folderId) {
-          state.currentFolderId = null
+          state.currentFolderId = FOLDER_ROOT_ID
         }
       })
     },
@@ -224,8 +224,8 @@ const foldersSlice = createSlice({
         }
       })
     },
-    // Navigate to a folder (or null for root)
-    navigateToFolder(state, action: PayloadAction<{folderId: string | null | undefined}>) {
+    // Navigate to a folder
+    navigateToFolder(state, action: PayloadAction<{folderId: string}>) {
       state.currentFolderId = action.payload.folderId
     },
     // Set folder panel visibility
@@ -302,7 +302,7 @@ const foldersSlice = createSlice({
     },
     moveRequest(
       state,
-      action: PayloadAction<{closeDialogId?: string; folder: Folder; folderId: string | null}>
+      action: PayloadAction<{closeDialogId?: string; folder: Folder; folderId: string}>
     ) {
       const {folder} = action.payload
       if (folder._id && state.byIds[folder._id]) {
@@ -630,7 +630,7 @@ export const selectFolders: Selector<RootReducerState, FolderItem[]> = createSel
 )
 
 export const selectFolderById = createSelector(
-  [selectFoldersByIds, (_state: RootReducerState, folderId: string | null) => folderId],
+  [selectFoldersByIds, (_state: RootReducerState, folderId: string) => folderId],
   (byIds, folderId) => (folderId ? byIds[folderId] : null)
 )
 
@@ -641,37 +641,37 @@ export const selectCurrentFolder = createSelector(
   (byIds, currentFolderId) => (currentFolderId ? byIds[currentFolderId] : null)
 )
 
-// Get all child folders of the current folder
-export const selectChildFolders = createSelector(
-  [selectFolders, selectCurrentFolderId],
-  (folders, currentFolderId) =>
-    folders.filter((item: FolderItem) => {
-      const parentRef = item.folder.parent?._ref
-      if (currentFolderId === FOLDER_ROOT_ID) {
-        // Root level - folders with no parent
-        return !parentRef
-      }
-      return parentRef === currentFolderId
-    })
-)
+// // Get all child folders of the current folder
+// export const selectChildFolders = createSelector(
+//   [selectFolders, selectCurrentFolderId],
+//   (folders, currentFolderId) =>
+//     folders.filter((item: FolderItem) => {
+//       const parentRef = item.folder.parent?._ref
+//       if (currentFolderId === FOLDER_ROOT_ID) {
+//         // Root level - folders with no parent
+//         return !parentRef
+//       }
+//       return parentRef === currentFolderId
+//     })
+// )
 
-// Build breadcrumb trail from root to current folder
-export const selectBreadcrumbs = createSelector(
-  [selectFoldersByIds, selectCurrentFolderId],
-  (byIds, currentFolderId) => {
-    const breadcrumbs: FolderItem[] = []
-    let folderId = currentFolderId
+// // Build breadcrumb trail from root to current folder
+// export const selectBreadcrumbs = createSelector(
+//   [selectFoldersByIds, selectCurrentFolderId],
+//   (byIds, currentFolderId) => {
+//     const breadcrumbs: FolderItem[] = []
+//     let folderId = currentFolderId
 
-    while (folderId) {
-      const folderItem = byIds[folderId]
-      if (!folderItem) break
-      breadcrumbs.unshift(folderItem)
-      folderId = folderItem.folder.parent?._ref || null
-    }
+//     while (folderId) {
+//       const folderItem = byIds[folderId]
+//       if (!folderItem) break
+//       breadcrumbs.unshift(folderItem)
+//       folderId = folderItem.folder.parent?._ref || null
+//     }
 
-    return breadcrumbs
-  }
-)
+//     return breadcrumbs
+//   }
+// )
 
 // Build breadcrumb trail for a specific folder
 export const selectBreadcrumbsForFolder = createSelector(

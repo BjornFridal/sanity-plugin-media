@@ -4,7 +4,7 @@ import type {Asset, AssetItem, HttpError, Tag} from '../../types'
 export const ASSETS_ACTIONS = {
   moveToFolderComplete: createAction(
     'actions/moveToFolderComplete',
-    function prepare({assets, folderId}: {assets: Asset[]; folderId: string | null}) {
+    function prepare({assets, folderId}: {assets: Asset[]; folderId: string}) {
       return {payload: {assets, folderId}}
     }
   ),
@@ -17,14 +17,14 @@ export const ASSETS_ACTIONS = {
     }: {
       assets: Asset[]
       error: HttpError
-      folderId: string | null
+      folderId: string
     }) {
       return {payload: {assets, error, folderId}}
     }
   ),
   moveToFolderRequest: createAction(
     'actions/moveToFolderRequest',
-    function prepare({assets, folderId}: {assets: Asset[]; folderId: string | null}) {
+    function prepare({assets, folderId}: {assets: Asset[]; folderId: string}) {
       return {payload: {assets, folderId}}
     }
   ),

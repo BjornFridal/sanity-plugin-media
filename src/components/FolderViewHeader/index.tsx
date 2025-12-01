@@ -25,7 +25,7 @@ const FolderViewHeader = ({allowCreate, light, title}: Props) => {
   const handleFolderCreate = () => {
     dispatch(
       DIALOG_ACTIONS.showFolderCreate({
-        parentId: currentFolderId || undefined
+        parentId: currentFolderId
       })
     )
   }
